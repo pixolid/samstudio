@@ -13,6 +13,7 @@ interface SegmentationCanvasProps {
   isEncoding: boolean
   isDecoding: boolean
   onDecode: (points: SegmentationPoint[]) => void
+  clearTrigger: number
 }
 
 interface PointMarker {
@@ -30,6 +31,7 @@ export function SegmentationCanvas({
   isEncoding,
   isDecoding,
   onDecode,
+  clearTrigger,
 }: SegmentationCanvasProps) {
   const containerRef  = useRef<HTMLDivElement>(null)
   const imageRef      = useRef<HTMLImageElement>(null)
@@ -66,6 +68,18 @@ export function SegmentationCanvas({
       ctx.clearRect(0, 0, maskCanvasRef.current.width, maskCanvasRef.current.height)
     }
   }, [imageUrl])
+
+  // ── Clear points when triggered from outside ───────────────────────────────
+  useEffect(() => {
+    if (clearTrigger === 0) return
+    pointsRef.current = []
+    isMultiMaskRef.current = false
+    setMarkers([])
+    const ctx = maskCanvasRef.current?.getContext('2d')
+    if (ctx && maskCanvasRef.current) {
+      ctx.clearRect(0, 0, maskCanvasRef.current.width, maskCanvasRef.current.height)
+    }
+  }, [clearTrigger])
 
   // ── Render mask when maskData arrives ─────────────────────────────────────
   useEffect(() => {
@@ -188,13 +202,15 @@ export function SegmentationCanvas({
 
       {/* Point markers */}
       {markers.map((marker, i) => (
-        <span
+        <div
           key={i}
-          className="absolute select-none pointer-events-none text-xl"
-          style={{ left: marker.x, top: marker.y, transform: 'translate(-50%, -50%)', textShadow: '0 0 6px rgba(0,0,0,0.7)', zIndex: 10 }}
+          className="absolute pointer-events-none"
+          style={{ left: marker.x, top: marker.y, transform: 'translate(-50%, -50%)', zIndex: 10 }}
         >
-          {marker.label === 1 ? '⭐' : '❌'}
-        </span>
+          <div className={`w-4 h-4 rounded-full border-2 border-white shadow-md ${
+            marker.label === 1 ? 'bg-green-500' : 'bg-red-500'
+          }`} />
+        </div>
       ))}
 
       {/* Loading/working overlay */}

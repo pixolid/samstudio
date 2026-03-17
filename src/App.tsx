@@ -43,6 +43,7 @@ function AppInner() {
   const [maskData, setMaskData] = useState<MaskData | null>(null)
   const [maskOpacity, setMaskOpacity] = useState(0.6)
   const [statusMessage, setStatusMessage] = useState('Load the model to begin')
+  const [clearTrigger, setClearTrigger] = useState(0)
   const currentImageUrlRef = useRef<string | null>(null)
 
   // Wire up worker callbacks
@@ -85,6 +86,7 @@ function AppInner() {
 
   const handleClearPoints = useCallback(() => {
     setMaskData(null)
+    setClearTrigger(t => t + 1)
     setStatusMessage('Points cleared — click to add new points.')
   }, [])
 
@@ -126,6 +128,7 @@ function AppInner() {
           isEncoding={isEncoding}
           isDecoding={isDecoding}
           onDecode={handleDecode}
+          clearTrigger={clearTrigger}
         />
 
         <div className="absolute bottom-0 left-0 right-0 px-4 py-2 text-center pointer-events-none">
