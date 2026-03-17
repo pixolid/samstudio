@@ -12,7 +12,9 @@ interface SAMModelHandle {
   loadModel: () => Promise<void>
 }
 
-const MODEL_ID = 'onnx-community/sam3-tracker-ONNX'
+// sam2-hiera-tiny is purpose-built for single-image segmentation.
+// sam3-tracker-ONNX was a video tracking model — far too heavy for this use case.
+const MODEL_ID = 'onnx-community/sam2-hiera-tiny-ONNX'
 const DTYPE_CONFIG = {
   vision_encoder: 'q4' as const,
   prompt_encoder_mask_decoder: 'q8' as const,
@@ -39,7 +41,7 @@ export function useSAMModel(): SAMModelHandle {
     setPartialState({ status: 'loading', progress: 0, error: null })
 
     // Dynamic import to avoid loading the large library until needed
-    const { Sam3TrackerModel, AutoProcessor } = await import('@huggingface/transformers')
+    const { Sam2Model, AutoProcessor } = await import('@huggingface/transformers')
 
     const progressCallback = (p: ProgressInfo) => {
       if ('progress' in p && typeof p.progress === 'number') {
@@ -51,9 +53,9 @@ export function useSAMModel(): SAMModelHandle {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((navigator as any).gpu) {
       try {
-        setPartialState({ statusMessage: 'Loading SAM 3 model with WebGPU (GPU accelerated)…' })
+        setPartialState({ statusMessage: 'Loading SAM 2 model with WebGPU (GPU accelerated)…' })
 
-        const m = await Sam3TrackerModel.from_pretrained(MODEL_ID, {
+        const m = await Sam2Model.from_pretrained(MODEL_ID, {
           dtype: DTYPE_CONFIG,
           device: 'webgpu',
           progress_callback: progressCallback,
@@ -66,7 +68,7 @@ export function useSAMModel(): SAMModelHandle {
           status: 'ready',
           backend: 'webgpu' as BackendType,
           progress: 100,
-          statusMessage: 'Model ready (WebGPU)',
+          statusMessage: 'SAM 2 ready (WebGPU)',
         })
         return
       } catch (err) {
@@ -77,9 +79,9 @@ export function useSAMModel(): SAMModelHandle {
 
     // ── Attempt 2: WASM / CPU ─────────────────────────────────────────────
     try {
-      setPartialState({ statusMessage: 'Loading SAM 3 model with CPU (WASM)…' })
+      setPartialState({ statusMessage: 'Loading SAM 2 model with CPU (WASM)…' })
 
-      const m = await Sam3TrackerModel.from_pretrained(MODEL_ID, {
+      const m = await Sam2Model.from_pretrained(MODEL_ID, {
         dtype: DTYPE_CONFIG,
         device: 'wasm',
         progress_callback: progressCallback,
@@ -92,7 +94,7 @@ export function useSAMModel(): SAMModelHandle {
         status: 'ready',
         backend: 'wasm' as BackendType,
         progress: 100,
-        statusMessage: 'Model ready (CPU / WASM)',
+        statusMessage: 'SAM 2 ready (CPU / WASM)',
       })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)

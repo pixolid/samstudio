@@ -41,11 +41,10 @@ export function SegmentationCanvas({
   const imageProcessedRef  = useRef<AnyModel>(null)
   const imageEmbeddingsRef = useRef<AnyModel>(null)
   const pointsRef          = useRef<SegmentationPoint[]>([])
-  const isMultiMaskModeRef   = useRef(false)
-  const isEncodingRef        = useRef(false)
-  const isDecodingRef        = useRef(false)
-  const decodePendingRef     = useRef(false)
-  const lastMoveDecodeRef    = useRef(0)
+  const isMultiMaskModeRef = useRef(false)
+  const isEncodingRef      = useRef(false)
+  const isDecodingRef      = useRef(false)
+  const decodePendingRef   = useRef(false)
   const maskDataRef        = useRef<MaskData | null>(null)
 
   const [markers, setMarkers]     = useState<PointMarker[]>([])
@@ -283,18 +282,11 @@ export function SegmentationCanvas({
     decode()
   }, [hasImage, getPoint, decode])
 
-  const MOUSE_MOVE_THROTTLE_MS = 150
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!imageEmbeddingsRef.current || isMultiMaskModeRef.current || !hasImage) return
-    const now = Date.now()
-    if (now - lastMoveDecodeRef.current < MOUSE_MOVE_THROTTLE_MS) return
-    lastMoveDecodeRef.current = now
-    const point = getPoint(e)
-    if (!point) return
-    pointsRef.current = [point]
-    decode()
-  }, [hasImage, getPoint, decode])
+  // No hover-based decode — inference only runs on click.
+  // Continuous decoding on mousemove saturates CPU/GPU and causes system crashes.
+  const handleMouseMove = useCallback((_e: React.MouseEvent) => {
+    // intentionally empty — kept for future cursor feedback only
+  }, [])
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
