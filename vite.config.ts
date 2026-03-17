@@ -12,6 +12,9 @@ export default defineConfig({
     },
   },
   envPrefix: ['VITE_'],
+  worker: {
+    format: 'es',
+  },
   server: {
     host: true,
     port: 5176,

@@ -1,4 +1,4 @@
-import type { MaskData, RawImageData } from '@/types/sam'
+import type { MaskData } from '@/types/sam'
 
 function triggerDownload(canvas: HTMLCanvasElement, filename: string) {
   canvas.toBlob((blob) => {
@@ -18,7 +18,7 @@ function triggerDownload(canvas: HTMLCanvasElement, filename: string) {
 }
 
 /** Download a binary black/white mask PNG */
-export function downloadMask(maskData: MaskData, filename = 'sam3_mask.png') {
+export function downloadMask(maskData: MaskData, filename = 'sam2_mask.png') {
   const { mask, numMasks, bestIndex } = maskData
   const { width: w, height: h } = mask
 
@@ -40,32 +40,42 @@ export function downloadMask(maskData: MaskData, filename = 'sam3_mask.png') {
 }
 
 /** Download a transparent RGBA cutout, cropped to the bounding box */
-export function downloadCutout(maskData: MaskData, rawImage: RawImageData, filename = 'sam3_cutout.png') {
+export async function downloadCutout(maskData: MaskData, imageUrl: string, filename = 'sam2_cutout.png') {
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve()
+    img.onerror = reject
+    img.src = imageUrl
+  })
+
   const { mask, numMasks, bestIndex } = maskData
-  const { width: w, height: h } = mask
-  const { data: srcPx, channels: srcChannels } = rawImage
+  const { width: mW, height: mH } = mask
+
+  // Draw original image at mask resolution
+  const srcCanvas = document.createElement('canvas')
+  srcCanvas.width = mW
+  srcCanvas.height = mH
+  srcCanvas.getContext('2d')!.drawImage(img, 0, 0, mW, mH)
+  const srcPx = srcCanvas.getContext('2d')!.getImageData(0, 0, mW, mH).data
 
   const canvas = document.createElement('canvas')
-  canvas.width = w
-  canvas.height = h
+  canvas.width = mW
+  canvas.height = mH
   const ctx = canvas.getContext('2d')!
-  const imgData = ctx.createImageData(w, h)
+  const imgData = ctx.createImageData(mW, mH)
   const px = imgData.data
 
-  let minX = w, minY = h, maxX = 0, maxY = 0
-
-  for (let i = 0; i < w * h; i++) {
-    const isMask = mask.data[numMasks * i + bestIndex] === 1
-    if (isMask) {
-      const srcOff = srcChannels * i
+  let minX = mW, minY = mH, maxX = 0, maxY = 0
+  for (let i = 0; i < mW * mH; i++) {
+    if (mask.data[numMasks * i + bestIndex] === 1) {
       const off = 4 * i
-      px[off]     = srcPx[srcOff]
-      px[off + 1] = srcPx[srcOff + 1]
-      px[off + 2] = srcPx[srcOff + 2]
+      px[off]     = srcPx[off]
+      px[off + 1] = srcPx[off + 1]
+      px[off + 2] = srcPx[off + 2]
       px[off + 3] = 255
-
-      const x = i % w
-      const y = Math.floor(i / w)
+      const x = i % mW
+      const y = Math.floor(i / mW)
       if (x < minX) minX = x
       if (x > maxX) maxX = x
       if (y < minY) minY = y

@@ -6,7 +6,7 @@ import {
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/hooks/useAuth'
 import { doSignOut } from '@/firebase/auth'
-import type { MaskData, RawImageData, BackendType, ModelState } from '@/types/sam'
+import type { MaskData, BackendType, ModelState } from '@/types/sam'
 import { downloadMask, downloadCutout } from '@/utils/download'
 
 // ── Example images (from SAM's demo set) ──────────────────────────────────────
@@ -61,7 +61,7 @@ interface SidebarProps {
   hasMask: boolean
   // Export
   maskData: MaskData | null
-  rawImageData: RawImageData | null
+  imageUrl: string | null
   // Model info
   modelState: ModelState
   onLoadModel: () => void
@@ -80,7 +80,7 @@ export function Sidebar({
   onResetImage,
   hasMask,
   maskData,
-  rawImageData,
+  imageUrl,
   modelState,
   onLoadModel,
 }: SidebarProps) {
@@ -279,8 +279,8 @@ export function Sidebar({
               Download Mask (PNG)
             </button>
             <button
-              onClick={() => { if (maskData && rawImageData) downloadCutout(maskData, rawImageData) }}
-              disabled={!hasMask || !rawImageData}
+              onClick={async () => { if (maskData && imageUrl) await downloadCutout(maskData, imageUrl) }}
+              disabled={!hasMask || !imageUrl}
               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium transition-all
                 disabled:opacity-40 disabled:cursor-not-allowed
                 ${isDark ? 'bg-white/5 hover:bg-white/10 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
@@ -295,7 +295,7 @@ export function Sidebar({
             <div className={`space-y-2 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               <div className="flex justify-between">
                 <span>Model</span>
-                <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>SAM 3 (q4)</span>
+                <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>SAM 2 Tiny (q4/q8)</span>
               </div>
               <div className="flex justify-between">
                 <span>Backend</span>
@@ -339,7 +339,7 @@ export function Sidebar({
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold
                   bg-violet-500 text-white hover:bg-violet-600 transition-all shadow-lg shadow-violet-500/20"
               >
-                Load SAM 3 Model
+                Load SAM 2 Model
               </button>
             )}
             {modelState.status === 'error' && (

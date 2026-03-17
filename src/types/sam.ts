@@ -25,11 +25,3 @@ export interface ModelState {
   error: string | null
 }
 
-// Image data from RawImage for cutout export
-export interface RawImageData {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any
-  width: number
-  height: number
-  channels: number
-}
