@@ -109,8 +109,6 @@ function AppInner() {
         imageFileName={imageFileName}
         maskOpacity={maskOpacity}
         onMaskOpacityChange={setMaskOpacity}
-        onClearPoints={handleClearPoints}
-        onResetImage={handleResetImage}
         hasMask={!!maskData}
         maskData={maskData}
         imageUrl={imageUrl}
@@ -144,6 +142,10 @@ function AppInner() {
         <Toolbar
           onToggleSidebar={() => setSidebarOpen((p) => !p)}
           sidebarOpen={sidebarOpen}
+          hasImage={isEmbeddingReady}
+          hasMask={!!maskData}
+          onClearPoints={handleClearPoints}
+          onResetImage={handleResetImage}
         />
       </div>
 
