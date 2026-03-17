@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAM Studio</title>
+  <meta name="description"
+    content="SAM Studio — segment anything in your browser. Upload an image, click to select regions, download masks and cutouts. No server needed." />
+
+  <!-- Open Graph / Social Media Meta Tags -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://pixolid.de/samstudio/" />
+  <meta property="og:title" content="SAM Studio" />
+  <meta property="og:description"
+    content="Segment anything in your browser. Upload an image, click to select regions, download masks and cutouts. No server needed." />
+  <meta property="og:image" content="https://pixolid.de/samstudio/favicon.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://pixolid.de/samstudio/" />
+  <meta property="twitter:title" content="SAM Studio" />
+  <meta property="twitter:description"
+    content="Segment anything in your browser. Upload an image, click to select regions, download masks and cutouts. No server needed." />
+  <meta property="twitter:image" content="https://pixolid.de/samstudio/favicon.png" />
+
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-card: rgba(17, 24, 39, 0.85);
+      --bg-card-hover: rgba(30, 41, 59, 0.9);
+      --border: rgba(99, 102, 241, 0.2);
+      --border-hover: rgba(99, 102, 241, 0.5);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.35);
+      --accent-hover: #818cf8;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --mask-color-r: 99;
+      --mask-color-g: 102;
+      --mask-color-b: 241;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139, 92, 246, 0.08), transparent);
+    }
+
+    /* ─── Header ──────────────────────────────── */
+    .app-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      animation: fadeInDown 0.6s ease-out;
+    }
+
+    .app-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #c7d2fe 0%, #6366f1 50%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: inline;
+    }
+
+    .app-header .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .app-header .sam-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .app-header p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      margin-top: 0.5rem;
+    }
+
+    .app-header a {
+      color: var(--accent-hover);
+      text-decoration: none;
+    }
+
+    .app-header a:hover {
+      text-decoration: underline;
+    }
+
+    /* ─── Main Card ────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 900px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 0 60px rgba(99, 102, 241, 0.06), 0 8px 32px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+      animation: fadeInUp 0.6s ease-out 0.15s both;
+    }
+
+    .card-body {
+      padding: 2rem;
+    }
+
+    /* ─── Image Container ─────────────────────── */
+    .image-container {
+      position: relative;
+      width: 100%;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      cursor: crosshair;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .image-container:hover {
+      border-color: var(--border-hover);
+    }
+
+    .image-container.has-image {
+      min-height: unset;
+    }
+
+    #image-display {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 70vh;
+      object-fit: contain;
+    }
+
+    #image-display.hidden {
+      display: none;
+    }
+
+    #mask-output {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      image-rendering: pixelated;
+    }
+
+    .icon {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
+      user-select: none;
+      pointer-events: none;
+      text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+      animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 10;
+    }
+
+    /* ─── Upload Area ─────────────────────────── */
+    .upload-area {
+      position: absolute;
+      inset: 0;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.3s, background 0.3s;
+      padding: 2rem;
+    }
+
+    .upload-area:hover,
+    .upload-area.drag-over {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .upload-area.hidden {
+      display: none;
+    }
+
+    .upload-icon {
+      width: 56px;
+      height: 56px;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      transition: color 0.3s;
+    }
+
+    .upload-area:hover .upload-icon {
+      color: var(--accent);
+    }
+
+    .upload-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .upload-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .example-label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin: 1.25rem 0 0.75rem;
+    }
+
+    .example-gallery {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .example-image {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .example-image:hover {
+      transform: scale(1.08);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* ─── Status ──────────────────────────────── */
+    .status-bar {
+      text-align: center;
+      padding: 1rem 0 0.75rem;
+      min-height: 2.5rem;
+    }
+
+    #status {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      transition: color 0.3s;
+    }
+
+    #status.loading {
+      color: var(--warning);
+    }
+
+    #status.ready {
+      color: var(--success);
+    }
+
+    #status.error {
+      color: var(--danger);
+    }
+
+    /* ─── Progress Bar ────────────────────────── */
+    .progress-container {
+      width: 100%;
+      height: 4px;
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .progress-container.hidden {
+      display: none;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      border-radius: 2px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .progress-bar.indeterminate {
+      width: 30% !important;
+      animation: indeterminate 1.5s ease-in-out infinite;
+    }
+
+    /* ─── Settings Panel ──────────────────────── */
+    .settings-panel {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 0.75rem 0;
+    }
+
+    .setting-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .setting-group label {
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100px;
+      height: 4px;
+      background: rgba(99, 102, 241, 0.2);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* ─── Controls ────────────────────────────── */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      padding: 0.5rem 0 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ─── Download Panel ──────────────────────── */
+    .download-panel {
+      margin-top: 1.25rem;
+      padding: 1.25rem;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      animation: fadeInUp 0.4s ease-out;
+    }
+
+    .download-panel.hidden {
+      display: none;
+    }
+
+    .download-panel h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .download-grid {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* ─── Info Line ────────────────────────────── */
+    .info-line {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 0.75rem 0 0;
+    }
+
+    .info-line kbd {
+      padding: 0.15em 0.4em;
+      font-size: 0.8em;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+    }
+
+    /* ─── Footer ──────────────────────────────── */
+    .app-footer {
+      text-align: center;
+      padding: 2rem 0 0.5rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      animation: fadeInUp 0.6s ease-out 0.3s both;
+    }
+
+    .app-footer a {
+      color: var(--accent-hover);
+      text-decoration: none;
+    }
+
+    .app-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ─── Animations ──────────────────────────── */
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    @keyframes indeterminate {
+      0% {
+        margin-left: 0;
+      }
+
+      50% {
+        margin-left: 70%;
+      }
+
+      100% {
+        margin-left: 0;
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* ─── Responsive ──────────────────────────── */
+    @media (max-width: 640px) {
+      body {
+        padding: 1rem 0.5rem;
+      }
+
+      .app-header h1 {
+        font-size: 1.75rem;
+      }
+
+      .card-body {
+        padding: 1.25rem;
+      }
+
+      .btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+      }
+
+      .example-image {
+        width: 56px;
+        height: 56px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-row">
+      <img src="favicon.png" alt="Yosemite SAM" class="sam-icon" />
+      <h1>SAM Studio</h1>
+    </div>
+    <p>Segment images using <strong>Interactive Points</strong> — right in your browser.<br />
+      Created by <a href="https://zvonkovugreshek.com" target="_blank">Zvonko Vugreshek</a>
+      from <a href="https://pixolid.de" target="_blank">Pixolid UG</a>.
+    </p>
+  </header>
+
+  <!-- Main Card -->
+  <main class="card">
+    <div class="card-body">
+      <!-- Image Container -->
+      <div class="image-container" id="container">
+        <label class="upload-area" id="upload-area" for="upload">
+          <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <span class="upload-title">Click to upload an image</span>
+          <span class="upload-sub">or drag and drop • PNG, JPG, WebP</span>
+
+          <p class="example-label">...or try an example:</p>
+          <div class="example-gallery" id="example-gallery">
+            <img src="https://huggingface.co/datasets/hf-internal-testing/sam2-fixtures/resolve/main/truck.jpg"
+              class="example-image" alt="Truck" />
+            <img src="https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/corgi.jpg"
+              class="example-image" alt="Corgi" />
+            <img src="https://huggingface.co/datasets/hf-internal-testing/sam2-fixtures/resolve/main/groceries.jpg"
+              class="example-image" alt="Groceries" />
+          </div>
+        </label>
+
+        <img id="image-display" class="hidden" alt="Uploaded image" />
+        <canvas id="mask-output"></canvas>
+      </div>
+
+      <!-- Status -->
+      <div class="status-bar">
+        <span id="status" class="loading">Loading model...</span>
+        <div class="progress-container" id="progress-container">
+          <div class="progress-bar indeterminate" id="progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="settings-panel">
+        <div class="setting-group">
+          <label for="opacity-slider">Mask opacity</label>
+          <input type="range" id="opacity-slider" min="0.1" max="0.9" step="0.05" value="0.6" />
+          <span id="opacity-value">0.6</span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button class="btn" id="reset-image" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          Reset Image
+        </button>
+        <button class="btn" id="clear-points" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+          Clear Points
+        </button>
+        <button class="btn btn-primary" id="download-mask" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Download Mask
+        </button>
+        <button class="btn btn-primary" id="download-cutout" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          Download Cutout
+        </button>
+      </div>
+
+      <!-- Download Panel (per-segment, shown when multiple masks) -->
+      <div class="download-panel hidden" id="download-panel">
+        <h3>📦 Segment Downloads</h3>
+        <div class="download-grid" id="download-grid"></div>
+      </div>
+
+      <!-- Info -->
+      <div class="info-line">
+        <kbd>Left click</kbd> = include region ⭐ &nbsp;&nbsp;
+        <kbd>Right click</kbd> = exclude region ❌
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    Developed by <a href="https://zvonkovugreshek.com" target="_blank">Zvonko Vugreshek</a> |
+    <a href="https://pixolid.de" target="_blank">Pixolid UG</a> ·
+    Powered by SAM 3
+  </footer>
+
+  <!-- Hidden file input -->
+  <input id="upload" type="file" accept="image/*" disabled hidden />
+
+  <script type="module">
+    import {
+      Sam3TrackerModel,
+      AutoProcessor,
+      RawImage,
+      Tensor,
+    } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@next";
+
+    // ─── DOM Elements ────────────────────────────────────────────────────
+    const statusLabel = document.getElementById("status");
+    const progressContainer = document.getElementById("progress-container");
+    const progressBar = document.getElementById("progress-bar");
+    const fileUpload = document.getElementById("upload");
+    const imageContainer = document.getElementById("container");
+    const uploadArea = document.getElementById("upload-area");
+    const exampleImages = document.querySelectorAll(".example-image");
+    const resetButton = document.getElementById("reset-image");
+    const clearButton = document.getElementById("clear-points");
+    const downloadMaskBtn = document.getElementById("download-mask");
+    const downloadCutBtn = document.getElementById("download-cutout");
+    const downloadPanel = document.getElementById("download-panel");
+    const downloadGrid = document.getElementById("download-grid");
+    const imageDisplay = document.getElementById("image-display");
+    const maskCanvas = document.getElementById("mask-output");
+    const maskContext = maskCanvas.getContext("2d");
+    const opacitySlider = document.getElementById("opacity-slider");
+    const opacityValue = document.getElementById("opacity-value");
+
+    // ─── State ───────────────────────────────────────────────────────────
+    let isEncoding = false;
+    let isDecoding = false;
+    let decodePending = false;
+    let lastPoints = null;
+    let isMultiMaskMode = false;
+    let imageInput = null;
+    let imageProcessed = null;
+    let imageEmbeddings = null;
+    let currentMaskData = null;   // { mask, scores, bestIndex }
+    let maskOpacity = 0.6;
+    let model, processor;
+
+    // ─── Helpers ─────────────────────────────────────────────────────────
+
+    function setStatus(text, type = "") {
+      statusLabel.textContent = text;
+      statusLabel.className = type;
+    }
+
+    function showProgress(determinate = false, percent = 0) {
+      progressContainer.classList.remove("hidden");
+      if (determinate) {
+        progressBar.classList.remove("indeterminate");
+        progressBar.style.width = `${percent}%`;
+      } else {
+        progressBar.classList.add("indeterminate");
+        progressBar.style.width = "";
+      }
+    }
+
+    function hideProgress() {
+      progressContainer.classList.add("hidden");
+    }
+
+    function clamp(x, min = 0, max = 1) {
+      return Math.max(Math.min(x, max), min);
+    }
+
+    // ─── Opacity Slider ──────────────────────────────────────────────────
+    opacitySlider.addEventListener("input", () => {
+      maskOpacity = parseFloat(opacitySlider.value);
+      opacityValue.textContent = maskOpacity.toFixed(2);
+      maskCanvas.style.opacity = maskOpacity;
+    });
+
+    // ─── Canvas Geometry ─────────────────────────────────────────────────
+
+    function updateCanvasGeometry() {
+      if (!imageDisplay.src || imageDisplay.classList.contains("hidden")) return;
+
+      const { naturalWidth, naturalHeight } = imageDisplay;
+      const containerRect = imageContainer.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+
+      const imageAR = naturalWidth / naturalHeight;
+      const containerAR = containerWidth / containerHeight;
+
+      let newWidth, newHeight, newTop, newLeft;
+      if (imageAR > containerAR) {
+        newWidth = containerWidth;
+        newHeight = newWidth / imageAR;
+        newTop = (containerHeight - newHeight) / 2;
+        newLeft = 0;
+      } else {
+        newHeight = containerHeight;
+        newWidth = newHeight * imageAR;
+        newLeft = (containerWidth - newWidth) / 2;
+        newTop = 0;
+      }
+
+      maskCanvas.style.width = `${newWidth}px`;
+      maskCanvas.style.height = `${newHeight}px`;
+      maskCanvas.style.top = `${newTop}px`;
+      maskCanvas.style.left = `${newLeft}px`;
+      maskCanvas.style.opacity = maskOpacity;
+    }
+
+    // ─── Encoding (Image Embedding) ──────────────────────────────────────
+
+    async function encode(url) {
+      if (isEncoding || !processor || !model) return;
+      isEncoding = true;
+      setStatus("Extracting image embedding...", "loading");
+      showProgress();
+
+      try {
+        imageInput = await RawImage.fromURL(url);
+        imageDisplay.onload = () => {
+          imageContainer.classList.add("has-image");
+          updateCanvasGeometry();
+        };
+        imageDisplay.src = url;
+        imageDisplay.classList.remove("hidden");
+        uploadArea.classList.add("hidden");
+
+        imageProcessed = await processor(imageInput);
+        imageEmbeddings = await model.get_image_embeddings(imageProcessed);
+
+        setStatus("Embedding ready — click on the image to segment!", "ready");
+        hideProgress();
+        resetButton.disabled = false;
+        clearButton.disabled = false;
+      } catch (error) {
+        console.error("Encoding error:", error);
+        setStatus("Error loading image. Please try again.", "error");
+        hideProgress();
+        resetUI();
+      } finally {
+        isEncoding = false;
+      }
+    }
+
+    // ─── Decoding (Mask Prediction) ──────────────────────────────────────
+
+    async function decode() {
+      if (isDecoding || !imageEmbeddings || !lastPoints || lastPoints.length === 0) {
+        if (isDecoding) decodePending = true;
+        return;
+      }
+      isDecoding = true;
+
+      try {
+        const reshaped = imageProcessed.reshaped_input_sizes[0];
+        const points = lastPoints
+          .map(x => [x.position[0] * reshaped[1], x.position[1] * reshaped[0]])
+          .flat(Infinity);
+        const labels = lastPoints.map(x => BigInt(x.label)).flat(Infinity);
+        const num_points = lastPoints.length;
+
+        const input_points = new Tensor("float32", points, [1, 1, num_points, 2]);
+        const input_labels = new Tensor("int64", labels, [1, 1, num_points]);
+
+        const { pred_masks, iou_scores } = await model({
+          ...imageEmbeddings,
+          input_points,
+          input_labels,
+        });
+
+        const masks = await processor.post_process_masks(
+          pred_masks,
+          imageProcessed.original_sizes,
+          imageProcessed.reshaped_input_sizes,
+        );
+
+        const mask = RawImage.fromTensor(masks[0][0]);
+        const scores = iou_scores.data;
+
+        // Find best mask
+        let bestIndex = 0;
+        for (let i = 1; i < scores.length; ++i) {
+          if (scores[i] > scores[bestIndex]) bestIndex = i;
+        }
+
+        currentMaskData = { mask, scores, bestIndex, numMasks: scores.length };
+        updateMaskOverlay(mask, scores, bestIndex);
+        setStatus(`Segment score: ${scores[bestIndex].toFixed(3)}`, "ready");
+      } catch (error) {
+        console.error("Decoding error:", error);
+        setStatus("Error generating mask.", "error");
+      } finally {
+        isDecoding = false;
+      }
+
+      if (decodePending) {
+        decodePending = false;
+        setTimeout(decode, 0);
+      }
+    }
+
+    // ─── Mask Overlay Drawing ────────────────────────────────────────────
+
+    function updateMaskOverlay(mask, scores, bestIndex) {
+      if (maskCanvas.width !== mask.width || maskCanvas.height !== mask.height) {
+        maskCanvas.width = mask.width;
+        maskCanvas.height = mask.height;
+      }
+
+      const imageData = maskContext.createImageData(maskCanvas.width, maskCanvas.height);
+      const numMasks = scores.length;
+      const pixelData = imageData.data;
+
+      const r = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--mask-color-r")) || 99;
+      const g = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--mask-color-g")) || 102;
+      const b = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--mask-color-b")) || 241;
+
+      for (let i = 0; i < pixelData.length / 4; ++i) {
+        if (mask.data[numMasks * i + bestIndex] === 1) {
+          const offset = 4 * i;
+          pixelData[offset] = r;
+          pixelData[offset + 1] = g;
+          pixelData[offset + 2] = b;
+          pixelData[offset + 3] = 255;
+        }
+      }
+      maskContext.putImageData(imageData, 0, 0);
+      updateCanvasGeometry();
+    }
+
+    // ─── Download Helper (uses regular canvas + toDataURL for reliable filenames) ──
+
+    function createCanvas(w, h) {
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      return c;
+    }
+
+    function triggerDownload(canvas, filename) {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          console.error("Failed to create blob from canvas");
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.style.display = "none";
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.dispatchEvent(new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        }));
+        // Cleanup after a generous delay to ensure download starts
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 3000);
+      }, "image/png");
+    }
+
+    // ─── Download: Binary Mask (PNG) ─────────────────────────────────────
+
+    downloadMaskBtn.addEventListener("click", () => {
+      if (!currentMaskData) return;
+      const { mask, numMasks, bestIndex } = currentMaskData;
+      const w = mask.width, h = mask.height;
+
+      const canvas = createCanvas(w, h);
+      const ctx = canvas.getContext("2d");
+      const imgData = ctx.createImageData(w, h);
+      const px = imgData.data;
+
+      for (let i = 0; i < w * h; ++i) {
+        const isMask = mask.data[numMasks * i + bestIndex] === 1;
+        const off = 4 * i;
+        px[off] = px[off + 1] = px[off + 2] = isMask ? 255 : 0;
+        px[off + 3] = 255;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      triggerDownload(canvas, "sam3_mask.png");
+    });
+
+    // ─── Download: RGBA Cutout (PNG, cropped to bbox) ────────────────────
+
+    downloadCutBtn.addEventListener("click", () => {
+      if (!currentMaskData || !imageInput) return;
+      const { mask, numMasks, bestIndex } = currentMaskData;
+      const w = mask.width, h = mask.height;
+
+      // Build full-size RGBA cutout
+      const canvas = createCanvas(w, h);
+      const ctx = canvas.getContext("2d");
+      const imgData = ctx.createImageData(w, h);
+      const px = imgData.data;
+      const srcPx = imageInput.data;
+      const srcChannels = imageInput.channels || 3;
+
+      let minX = w, minY = h, maxX = 0, maxY = 0;
+
+      for (let i = 0; i < w * h; ++i) {
+        const isMask = mask.data[numMasks * i + bestIndex] === 1;
+        const off = 4 * i;
+        if (isMask) {
+          const srcOff = srcChannels * i;
+          px[off] = srcPx[srcOff];
+          px[off + 1] = srcPx[srcOff + 1];
+          px[off + 2] = srcPx[srcOff + 2];
+          px[off + 3] = 255;
+
+          const x = i % w, y = Math.floor(i / w);
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+
+      // Crop to bounding box
+      if (maxX >= minX && maxY >= minY) {
+        const cropW = maxX - minX + 1;
+        const cropH = maxY - minY + 1;
+        const cropped = createCanvas(cropW, cropH);
+        const cCtx = cropped.getContext("2d");
+        cCtx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+        triggerDownload(cropped, "sam3_cutout.png");
+      } else {
+        triggerDownload(canvas, "sam3_cutout.png");
+      }
+    });
+
+    // ─── Point Interaction ───────────────────────────────────────────────
+
+    function getPoint(e) {
+      const canvasBB = maskCanvas.getBoundingClientRect();
+      const mouseX = clamp((e.clientX - canvasBB.left) / canvasBB.width);
+      const mouseY = clamp((e.clientY - canvasBB.top) / canvasBB.height);
+      return {
+        position: [mouseX, mouseY],
+        label: e.button === 2 ? 0 : 1,
+      };
+    }
+
+    imageContainer.addEventListener("mousedown", (e) => {
+      if (!imageEmbeddings || !uploadArea.classList.contains("hidden")) return;
+      if (e.button !== 0 && e.button !== 2) return;
+
+      if (!isMultiMaskMode) {
+        lastPoints = [];
+        isMultiMaskMode = true;
+        downloadMaskBtn.disabled = false;
+        downloadCutBtn.disabled = false;
+      }
+
+      const point = getPoint(e);
+      lastPoints.push(point);
+
+      // Place emoji marker
+      const icon = document.createElement("span");
+      icon.className = "icon";
+      icon.textContent = point.label === 1 ? "⭐" : "❌";
+      const canvasRect = maskCanvas.getBoundingClientRect();
+      const containerRect = imageContainer.getBoundingClientRect();
+      icon.style.left = `${canvasRect.left - containerRect.left + point.position[0] * canvasRect.width}px`;
+      icon.style.top = `${canvasRect.top - containerRect.top + point.position[1] * canvasRect.height}px`;
+      imageContainer.appendChild(icon);
+
+      decode();
+    });
+
+    imageContainer.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    // Hover preview (single-point, before first click)
+    imageContainer.addEventListener("mousemove", (e) => {
+      if (!imageEmbeddings || isMultiMaskMode || !uploadArea.classList.contains("hidden")) return;
+      lastPoints = [getPoint(e)];
+      decode();
+    });
+
+    // ─── File Upload ─────────────────────────────────────────────────────
+
+    fileUpload.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e2) => encode(e2.target.result);
+      reader.readAsDataURL(file);
+    });
+
+    // Drag-and-drop
+    uploadArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      uploadArea.classList.add("drag-over");
+    });
+    uploadArea.addEventListener("dragleave", () => {
+      uploadArea.classList.remove("drag-over");
+    });
+    uploadArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove("drag-over");
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (e2) => encode(e2.target.result);
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Example images
+    exampleImages.forEach((img) => {
+      img.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        exampleImages.forEach(i => (i.style.pointerEvents = "none"));
+        encode(img.src);
+      });
+    });
+
+    // ─── Clear / Reset ───────────────────────────────────────────────────
+
+    function clearPointsAndMask() {
+      isMultiMaskMode = false;
+      lastPoints = null;
+      currentMaskData = null;
+      document.querySelectorAll(".icon").forEach(e => e.remove());
+      downloadMaskBtn.disabled = true;
+      downloadCutBtn.disabled = true;
+      downloadPanel.classList.add("hidden");
+      maskContext.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      setStatus("Points cleared — click to add new points.", "ready");
+    }
+
+    function resetUI() {
+      imageInput = null;
+      imageProcessed = null;
+      imageEmbeddings = null;
+      isEncoding = false;
+      isDecoding = false;
+      decodePending = false;
+      clearPointsAndMask();
+      resetButton.disabled = true;
+      clearButton.disabled = true;
+      imageDisplay.src = "";
+      imageDisplay.classList.add("hidden");
+      uploadArea.classList.remove("hidden");
+      imageContainer.classList.remove("has-image");
+      maskCanvas.style.width = "0px";
+      maskCanvas.style.height = "0px";
+      exampleImages.forEach(img => (img.style.pointerEvents = "auto"));
+      setStatus("Ready", "ready");
+    }
+
+    clearButton.addEventListener("click", clearPointsAndMask);
+    resetButton.addEventListener("click", resetUI);
+    window.addEventListener("resize", updateCanvasGeometry);
+
+    // ─── Model Loading ───────────────────────────────────────────────────
+
+    async function loadModel() {
+      // Explicit WebGPU feature check BEFORE any loading
+      if (!navigator.gpu) {
+        hideProgress();
+        setStatus(
+          "WebGPU not supported in this browser. Try Chrome 113+ or Edge 113+.",
+          "error"
+        );
+        return;
+      }
+
+      try {
+        setStatus("Downloading SAM 3 model (first visit only)...", "loading");
+        showProgress();
+
+        const model_id = "onnx-community/sam3-tracker-ONNX";
+
+        model = await Sam3TrackerModel.from_pretrained(model_id, {
+          dtype: {
+            vision_encoder: "q4",
+            prompt_encoder_mask_decoder: "fp32",
+          },
+          device: "webgpu",
+        });
+
+        processor = await AutoProcessor.from_pretrained(model_id);
+
+        hideProgress();
+        setStatus("Ready — upload an image to begin!", "ready");
+        fileUpload.disabled = false;
+      } catch (error) {
+        console.error("Model loading error:", error);
+        hideProgress();
+        setStatus(`Error: ${error.message || error}`, "error");
+      }
+    }
+
+    await loadModel();
+  </script>
+</body>
+
+</html>
