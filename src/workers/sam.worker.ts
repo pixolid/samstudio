@@ -4,7 +4,7 @@ type AnyModel = any
 const MODEL_ID = 'onnx-community/sam2-hiera-tiny-ONNX'
 const DTYPE_CONFIG = {
   vision_encoder: 'q4' as const,
-  prompt_encoder_mask_decoder: 'q8' as const,
+  prompt_encoder_mask_decoder: 'fp32' as const,
 }
 
 let model: AnyModel = null

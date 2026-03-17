@@ -295,7 +295,7 @@ export function Sidebar({
             <div className={`space-y-2 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               <div className="flex justify-between">
                 <span>Model</span>
-                <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>SAM 2 Tiny (q4/q8)</span>
+                <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>SAM 2 Tiny (q4/fp32)</span>
               </div>
               <div className="flex justify-between">
                 <span>Backend</span>
