@@ -13,6 +13,7 @@ interface SegmentationCanvasProps {
   isEncoding: boolean
   isDecoding: boolean
   onDecode: (points: SegmentationPoint[]) => void
+  onAllPointsCleared: () => void
   clearTrigger: number
 }
 
@@ -31,6 +32,7 @@ export function SegmentationCanvas({
   isEncoding,
   isDecoding,
   onDecode,
+  onAllPointsCleared,
   clearTrigger,
 }: SegmentationCanvasProps) {
   const containerRef  = useRef<HTMLDivElement>(null)
@@ -119,49 +121,75 @@ export function SegmentationCanvas({
     }
   }, [maskOpacity])
 
-  // ── Click handling ─────────────────────────────────────────────────────────
-  const getPoint = useCallback((e: React.MouseEvent): SegmentationPoint | null => {
-    const canvas = maskCanvasRef.current
-    if (!canvas) return null
-    const bb = canvas.getBoundingClientRect()
-    if (bb.width === 0 || bb.height === 0) return null
-    return {
-      position: [
-        clamp((e.clientX - bb.left) / bb.width),
-        clamp((e.clientY - bb.top) / bb.height),
-      ],
-      label: e.button === 2 ? 0 : 1,
+  // ── Clear mask canvas overlay ──────────────────────────────────────────────
+  const clearMaskCanvas = useCallback(() => {
+    const ctx = maskCanvasRef.current?.getContext('2d')
+    if (ctx && maskCanvasRef.current) {
+      ctx.clearRect(0, 0, maskCanvasRef.current.width, maskCanvasRef.current.height)
     }
   }, [])
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  // ── Add a point (shared by click and context menu) ─────────────────────────
+  const addPoint = useCallback((e: React.MouseEvent, label: 0 | 1) => {
     if (!isEmbeddingReady || isDecoding) return
-    if (e.button !== 0 && e.button !== 2) return
+
+    const canvas = maskCanvasRef.current
+    if (!canvas) return
+    const bb = canvas.getBoundingClientRect()
+    if (bb.width === 0 || bb.height === 0) return
 
     if (!isMultiMaskRef.current) {
       pointsRef.current = []
       isMultiMaskRef.current = true
     }
 
-    const point = getPoint(e)
-    if (!point) return
+    const position: [number, number] = [
+      clamp((e.clientX - bb.left) / bb.width),
+      clamp((e.clientY - bb.top) / bb.height),
+    ]
+    const point: SegmentationPoint = { position, label }
     pointsRef.current.push(point)
 
-    const canvasBB = maskCanvasRef.current!.getBoundingClientRect()
     const containerBB = containerRef.current!.getBoundingClientRect()
     setMarkers(prev => [
       ...prev,
       {
-        x: canvasBB.left - containerBB.left + point.position[0] * canvasBB.width,
-        y: canvasBB.top - containerBB.top + point.position[1] * canvasBB.height,
-        label: point.label,
+        x: bb.left - containerBB.left + position[0] * bb.width,
+        y: bb.top - containerBB.top + position[1] * bb.height,
+        label,
       },
     ])
 
     onDecode(pointsRef.current)
-  }, [isEmbeddingReady, isDecoding, getPoint, onDecode])
+  }, [isEmbeddingReady, isDecoding, onDecode])
 
-  const handleContextMenu = useCallback((e: React.MouseEvent) => e.preventDefault(), [])
+  // ── Left click → include (label 1) ────────────────────────────────────────
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return
+    addPoint(e, 1)
+  }, [addPoint])
+
+  // ── Right click → exclude (label 0) ───────────────────────────────────────
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    addPoint(e, 0)
+  }, [addPoint])
+
+  // ── Click marker → remove that single point ────────────────────────────────
+  const handleRemovePoint = useCallback((e: React.MouseEvent, index: number) => {
+    e.stopPropagation()
+    const newPoints = pointsRef.current.filter((_, i) => i !== index)
+    pointsRef.current = newPoints
+    setMarkers(prev => prev.filter((_, i) => i !== index))
+
+    if (newPoints.length === 0) {
+      isMultiMaskRef.current = false
+      clearMaskCanvas()
+      onAllPointsCleared()
+    } else {
+      onDecode(newPoints)
+    }
+  }, [onDecode, onAllPointsCleared, clearMaskCanvas])
 
   const isWorking = isEncoding || isDecoding
 
@@ -169,7 +197,7 @@ export function SegmentationCanvas({
     <div
       ref={containerRef}
       className={`relative w-full h-full overflow-hidden ${isEmbeddingReady && !isDecoding ? 'segment-cursor' : ''}`}
-      onMouseDown={handleMouseDown}
+      onClick={handleClick}
       onContextMenu={handleContextMenu}
     >
       {/* Image */}
@@ -200,16 +228,19 @@ export function SegmentationCanvas({
         style={{ top: geometry.top, left: geometry.left, width: geometry.width, height: geometry.height, opacity: maskOpacity, imageRendering: 'pixelated' }}
       />
 
-      {/* Point markers */}
+      {/* Point markers — click to remove */}
       {markers.map((marker, i) => (
         <div
           key={i}
-          className="absolute pointer-events-none"
+          className="absolute group cursor-pointer"
           style={{ left: marker.x, top: marker.y, transform: 'translate(-50%, -50%)', zIndex: 10 }}
+          onClick={(e) => handleRemovePoint(e, i)}
+          title="Click to remove this point"
         >
-          <div className={`w-4 h-4 rounded-full border-2 border-white shadow-md ${
-            marker.label === 1 ? 'bg-green-500' : 'bg-red-500'
-          }`} />
+          <div className={`w-4 h-4 rounded-full border-2 border-white shadow-md transition-all
+            group-hover:scale-150 group-hover:opacity-60
+            ${marker.label === 1 ? 'bg-green-500' : 'bg-red-500'}`}
+          />
         </div>
       ))}
 

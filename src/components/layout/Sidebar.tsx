@@ -217,10 +217,10 @@ export function Sidebar({
                   key={ex.src}
                   onClick={() => onImageLoad(ex.src)}
                   title={ex.label}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-xs font-medium transition-all
+                  className={`block p-1 rounded-xl transition-all
                     ${isDark
-                      ? 'bg-white/5 hover:bg-violet-500/20 text-slate-400 hover:text-violet-300'
-                      : 'bg-slate-100 hover:bg-violet-50 text-slate-500 hover:text-violet-600'
+                      ? 'bg-white/5 hover:bg-violet-500/20'
+                      : 'bg-slate-100 hover:bg-violet-50'
                     }`}
                 >
                   <img
@@ -230,7 +230,6 @@ export function Sidebar({
                     loading="lazy"
                     crossOrigin="anonymous"
                   />
-                  <span>{ex.label}</span>
                 </button>
               ))}
             </div>
@@ -253,10 +252,16 @@ export function Sidebar({
                 className="w-full"
               />
             </div>
-            <div className={`text-xs space-y-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              <p>⭐ Left click — include region</p>
-              <p>❌ Right click — exclude region</p>
-              <p className="pt-1">Use toolbar buttons to clear points or reset image.</p>
+            <div className={`text-xs space-y-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500 border border-white/30 shrink-0" />
+                <span>Left click — include region</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500 border border-white/30 shrink-0" />
+                <span>Right click — exclude region</span>
+              </div>
+              <p className="pt-0.5">Click a point marker to remove it.</p>
             </div>
           </div>
 

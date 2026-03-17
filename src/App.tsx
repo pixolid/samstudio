@@ -128,6 +128,7 @@ function AppInner() {
           isEncoding={isEncoding}
           isDecoding={isDecoding}
           onDecode={handleDecode}
+          onAllPointsCleared={() => setMaskData(null)}
           clearTrigger={clearTrigger}
         />
 
