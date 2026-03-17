@@ -1,7 +1,6 @@
 import {
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signOut,
   onAuthStateChanged,
   type User,
@@ -13,15 +12,10 @@ import { auth, db } from './config'
 const googleProvider = new GoogleAuthProvider()
 
 export const doSignInWithGoogle = async () => {
-  await signInWithRedirect(auth, googleProvider)
-}
-
-/** Call once on app init to handle the redirect return and create user doc if needed */
-export const handleRedirectResult = async () => {
-  const result = await getRedirectResult(auth)
-  if (!result) return null
-
+  const result = await signInWithPopup(auth, googleProvider)
   const user = result.user
+
+  // Create user doc if it doesn't exist (shared across all Pixolid apps)
   const userDoc = await getDoc(doc(db, 'users', user.uid))
   if (!userDoc.exists()) {
     await setDoc(doc(db, 'users', user.uid), {

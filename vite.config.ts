@@ -15,10 +15,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 5176,
-    headers: {
-      // Required for SharedArrayBuffer (ONNX Runtime WASM multi-threading)
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'credentialless',
-    },
+    // Note: No COOP/COEP headers needed here — Chrome grants SharedArrayBuffer
+    // on localhost automatically. These headers are set in vercel.json for production.
   },
 })
