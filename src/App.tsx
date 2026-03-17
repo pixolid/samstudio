@@ -141,17 +141,15 @@ function AppInner() {
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-[320px]' : ''}`}>
-        <Toolbar
-          onToggleSidebar={() => setSidebarOpen((p) => !p)}
-          sidebarOpen={sidebarOpen}
-          hasImage={isEmbeddingReady}
-          hasMask={!!maskData}
-          onClearPoints={handleClearPoints}
-          onResetImage={handleResetImage}
-        />
-      </div>
+      {/* Toolbar — fixed, draggable */}
+      <Toolbar
+        onToggleSidebar={() => setSidebarOpen((p) => !p)}
+        sidebarOpen={sidebarOpen}
+        hasImage={isEmbeddingReady}
+        hasMask={!!maskData}
+        onClearPoints={handleClearPoints}
+        onResetImage={handleResetImage}
+      />
 
       {/* Toasts */}
       <ToastContainer toasts={toasts} onDismiss={dismiss} />

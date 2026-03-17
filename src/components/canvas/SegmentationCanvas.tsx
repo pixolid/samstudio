@@ -17,9 +17,12 @@ interface SegmentationCanvasProps {
   clearTrigger: number
 }
 
+// Stored as normalized fractions (0–1) relative to the image area.
+// Pixel position is derived from `geometry` at render time so markers
+// follow the image when the window is resized.
 interface PointMarker {
-  x: number
-  y: number
+  relX: number
+  relY: number
   label: 0 | 1
 }
 
@@ -150,14 +153,9 @@ export function SegmentationCanvas({
     const point: SegmentationPoint = { position, label }
     pointsRef.current.push(point)
 
-    const containerBB = containerRef.current!.getBoundingClientRect()
     setMarkers(prev => [
       ...prev,
-      {
-        x: bb.left - containerBB.left + position[0] * bb.width,
-        y: bb.top - containerBB.top + position[1] * bb.height,
-        label,
-      },
+      { relX: position[0], relY: position[1], label },
     ])
 
     onDecode(pointsRef.current)
@@ -228,21 +226,25 @@ export function SegmentationCanvas({
         style={{ top: geometry.top, left: geometry.left, width: geometry.width, height: geometry.height, opacity: maskOpacity, imageRendering: 'pixelated' }}
       />
 
-      {/* Point markers — click to remove */}
-      {markers.map((marker, i) => (
-        <div
-          key={i}
-          className="absolute group cursor-pointer"
-          style={{ left: marker.x, top: marker.y, transform: 'translate(-50%, -50%)', zIndex: 10 }}
-          onClick={(e) => handleRemovePoint(e, i)}
-          title="Click to remove this point"
-        >
-          <div className={`w-4 h-4 rounded-full border-2 border-white shadow-md transition-all
-            group-hover:scale-150 group-hover:opacity-60
-            ${marker.label === 1 ? 'bg-green-500' : 'bg-red-500'}`}
-          />
-        </div>
-      ))}
+      {/* Point markers — pixel pos derived from geometry so they scale with the image */}
+      {markers.map((marker, i) => {
+        const px = geometry.left + marker.relX * geometry.width
+        const py = geometry.top  + marker.relY * geometry.height
+        return (
+          <div
+            key={i}
+            className="absolute group cursor-pointer"
+            style={{ left: px, top: py, transform: 'translate(-50%, -50%)', zIndex: 10 }}
+            onClick={(e) => handleRemovePoint(e, i)}
+            title="Click to remove this point"
+          >
+            <div className={`w-4 h-4 rounded-full border-2 border-white shadow-md transition-all
+              group-hover:scale-150 group-hover:opacity-60
+              ${marker.label === 1 ? 'bg-green-500' : 'bg-red-500'}`}
+            />
+          </div>
+        )
+      })}
 
       {/* Loading/working overlay */}
       {((!isModelReady && imageUrl) || isWorking) && (

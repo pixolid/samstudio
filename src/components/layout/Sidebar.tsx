@@ -93,25 +93,29 @@ export function Sidebar({
       <div className={`w-full h-full flex flex-col backdrop-blur-xl shadow-2xl ${isDark ? 'bg-slate-900/95' : 'bg-slate-50/95'}`}>
 
         {/* ── Header ── */}
-        <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-200'}`}>
-          <div className="flex items-center gap-2">
-            <img
-              src="/logo_webseite_white.png"
-              alt="Pixolid"
-              className={`h-8 object-contain ${isDark ? '' : 'invert'}`}
-            />
-            <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>SAM Studio</span>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30">
-              Beta
-            </span>
+        <div className={`px-4 pt-4 pb-3 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-200'}`}>
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-1.5">
+              <img
+                src="/logo_webseite_white.png"
+                alt="Pixolid"
+                className={`h-10 object-contain object-left ${isDark ? '' : 'invert'}`}
+              />
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>SAM Studio</span>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30">
+                  Beta
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors text-lg leading-none mt-1
+                ${isDark ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            >
+              ×
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors text-lg leading-none
-              ${isDark ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
-          >
-            ×
-          </button>
         </div>
 
         {/* ── Scrollable content ── */}
