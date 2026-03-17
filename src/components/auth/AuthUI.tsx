@@ -11,15 +11,12 @@ export function AuthUI() {
     setIsProcessing(true)
     try {
       await doSignInWithGoogle()
+      // If the redirect fallback was triggered, the page navigates away
+      // and this code won't run. On return, useAuth picks up the session.
     } catch (err: unknown) {
-      const firebaseErr = err as { code?: string }
-      if (firebaseErr.code === 'auth/popup-closed-by-user') {
-        setError('Sign in was cancelled')
-      } else if (firebaseErr.code === 'auth/popup-blocked') {
-        setError('Pop-up was blocked. Please allow pop-ups and try again.')
-      } else {
-        setError('Authentication failed. Please try again.')
-      }
+      const firebaseErr = err as { code?: string; message?: string }
+      console.error('[auth] sign-in error:', firebaseErr.code, firebaseErr.message)
+      setError('Authentication failed. Please try again.')
     } finally {
       setIsProcessing(false)
     }
