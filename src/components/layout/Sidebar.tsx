@@ -99,7 +99,7 @@ export function Sidebar({
               <img
                 src="/logo_webseite_white.png"
                 alt="Pixolid"
-                className={`h-10 object-contain object-left ${isDark ? '' : 'invert'}`}
+                className={`w-[200px] h-[80px] object-contain object-left ${isDark ? '' : 'invert'}`}
               />
               <div className="flex items-center gap-2">
                 <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>SAM Studio</span>
