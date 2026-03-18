@@ -5,7 +5,8 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/',
+  // Sub-path where the app is served (must match Next.js rewrite source)
+  base: '/SamStudio/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
