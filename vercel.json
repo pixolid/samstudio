@@ -3,12 +3,12 @@
   "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/SamStudio/((?!assets/|samples/).*)",
+      "destination": "/SamStudio/index.html"
     },
     {
-      "source": "/((?!assets/|api/).*)",
-      "destination": "/index.html"
+      "source": "/((?!SamStudio/).*)",
+      "destination": "/SamStudio/index.html"
     }
   ]
 }

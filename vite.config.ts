@@ -5,7 +5,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  // Sub-path where the app is served (must match Next.js rewrite source)
+  // Sub-path where the app is served (must match Next.js rewrite on pixolid.de)
   base: '/SamStudio/',
   resolve: {
     alias: {
