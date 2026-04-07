@@ -29,7 +29,7 @@ export function AuthUI() {
 
       {/* Top-left logo */}
       <img
-        src="/logo_webseite_white.png"
+        src={`${import.meta.env.BASE_URL}logo_webseite_white.png`}
         alt="Pixolid"
         className="absolute top-6 left-6 w-[200px] h-[80px] object-contain z-10"
       />

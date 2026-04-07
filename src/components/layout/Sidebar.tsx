@@ -7,10 +7,12 @@ import type { MaskData, BackendType, ModelState } from '@/types/sam'
 import { downloadMask, downloadCutout } from '@/utils/download'
 
 // ── Example images (bundled in public/samples/) ────────────────────────────────
+// BASE_URL is '/SamStudio/' in production, '/' in dev — keeps paths correct on both
+const BASE = import.meta.env.BASE_URL
 const EXAMPLE_IMAGES = [
-  { label: '🚛 Truck',     src: '/samples/truck.jpg' },
-  { label: '🐕 Corgi',    src: '/samples/corgi.jpg' },
-  { label: '🛒 Groceries', src: '/samples/groceries.jpg' },
+  { src: `${BASE}samples/truck.jpg` },
+  { src: `${BASE}samples/corgi.jpg` },
+  { src: `${BASE}samples/groceries.jpg` },
 ]
 
 // ── Static section header with separator ──────────────────────────────────────
@@ -97,7 +99,7 @@ export function Sidebar({
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1.5">
               <img
-                src="/logo_webseite_white.png"
+                src={`${BASE}logo_webseite_white.png`}
                 alt="Pixolid"
                 className={`w-[200px] h-[80px] object-contain object-left ${isDark ? '' : 'invert'}`}
               />
