@@ -132,7 +132,7 @@ export function Sidebar({
                   bg-violet-500 text-white hover:bg-violet-600 transition-all shadow-lg shadow-violet-500/20"
               >
                 <Cpu className="w-4 h-4" />
-                Load SAM 2 Model
+                Load SAM 2.1 Model
               </button>
             )}
             {isModelLoading && (
@@ -173,7 +173,7 @@ export function Sidebar({
             {/* Model info row when ready */}
             {isModelReady && (
               <div className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                SAM 2 Tiny · vision q4 · decoder fp32
+                SAM 2.1 Tiny · vision q4 · decoder fp32
               </div>
             )}
           </div>

@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyModel = any
 
-const MODEL_ID = 'onnx-community/sam2-hiera-tiny-ONNX'
+const MODEL_ID = 'onnx-community/sam2.1-hiera-tiny-ONNX'
 const DTYPE_CONFIG = {
   vision_encoder: 'q4' as const,
   prompt_encoder_mask_decoder: 'fp32' as const,
@@ -31,7 +31,7 @@ async function handleLoadModel() {
     // Try WebGPU
     if ((self as AnyModel).navigator?.gpu) {
       try {
-        post({ type: 'status', message: 'Loading SAM 2 model with WebGPU…' })
+        post({ type: 'status', message: 'Loading SAM 2.1 model with WebGPU…' })
         model = await Sam2Model.from_pretrained(MODEL_ID, {
           dtype: DTYPE_CONFIG,
           device: 'webgpu',
@@ -46,7 +46,7 @@ async function handleLoadModel() {
     }
 
     // WASM fallback
-    post({ type: 'status', message: 'Loading SAM 2 model with WASM…' })
+    post({ type: 'status', message: 'Loading SAM 2.1 model with WASM…' })
     model = await Sam2Model.from_pretrained(MODEL_ID, {
       dtype: DTYPE_CONFIG,
       device: 'wasm',
