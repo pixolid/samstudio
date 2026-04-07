@@ -266,7 +266,7 @@ export function Sidebar({
                 <div className="w-3 h-3 rounded-full bg-red-500 border border-white/30 shrink-0" />
                 <span>Right click — exclude region</span>
               </div>
-              <p className="pt-0.5">Click a point marker to remove it.</p>
+              <p className="pt-0.5">Ctrl+Click a point marker to remove it.</p>
             </div>
           </div>
 

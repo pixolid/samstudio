@@ -4,6 +4,7 @@
   "rewrites": [
     { "source": "/SamStudio/assets/:path*", "destination": "/assets/:path*" },
     { "source": "/SamStudio/samples/:path*", "destination": "/samples/:path*" },
+    { "source": "/SamStudio/:file([^/]+\\.[^/]+)", "destination": "/:file" },
     { "source": "/:path*", "destination": "/index.html" }
   ]
 }

@@ -173,8 +173,9 @@ export function SegmentationCanvas({
     addPoint(e, 0)
   }, [addPoint])
 
-  // ── Click marker → remove that single point ────────────────────────────────
+  // ── Ctrl+Click marker → remove that single point ─────────────────────────
   const handleRemovePoint = useCallback((e: React.MouseEvent, index: number) => {
+    if (!e.ctrlKey && !e.metaKey) return  // plain click passes through to addPoint
     e.stopPropagation()
     const newPoints = pointsRef.current.filter((_, i) => i !== index)
     pointsRef.current = newPoints
@@ -233,10 +234,10 @@ export function SegmentationCanvas({
         return (
           <div
             key={i}
-            className="absolute group cursor-pointer"
+            className="absolute group"
             style={{ left: px, top: py, transform: 'translate(-50%, -50%)', zIndex: 10 }}
             onClick={(e) => handleRemovePoint(e, i)}
-            title="Click to remove this point"
+            title="Ctrl+Click to remove this point"
           >
             <div className={`w-4 h-4 rounded-full border-2 border-white shadow-md transition-all
               group-hover:scale-150 group-hover:opacity-60
