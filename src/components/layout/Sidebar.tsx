@@ -222,7 +222,6 @@ export function Sidebar({
                 <button
                   key={ex.src}
                   onClick={() => onImageLoad(ex.src)}
-                  title={ex.label}
                   className={`block p-1 rounded-xl transition-all
                     ${isDark
                       ? 'bg-white/5 hover:bg-violet-500/20'
@@ -231,7 +230,7 @@ export function Sidebar({
                 >
                   <img
                     src={ex.src}
-                    alt={ex.label}
+                    alt=""
                     className="w-full aspect-square rounded-lg object-cover opacity-70 hover:opacity-100 transition-opacity"
                     loading="lazy"
                     crossOrigin="anonymous"
