@@ -2,13 +2,8 @@
   "trailingSlash": false,
   "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]",
   "rewrites": [
-    {
-      "source": "/SamStudio/((?!assets/|samples/).*)",
-      "destination": "/SamStudio/index.html"
-    },
-    {
-      "source": "/((?!SamStudio/).*)",
-      "destination": "/SamStudio/index.html"
-    }
+    { "source": "/SamStudio/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/SamStudio/samples/:path*", "destination": "/samples/:path*" },
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
